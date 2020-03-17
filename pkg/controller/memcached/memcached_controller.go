@@ -131,6 +131,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	size := memcached.Spec.Size
 	if *found.Spec.Replicas != size {
 		found.Spec.Replicas = &size
+		//
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
 			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)

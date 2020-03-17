@@ -19,7 +19,7 @@ spec:
           image: tanjunchen/memcached-operator:v1
           command:
           - memcached-operator
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
