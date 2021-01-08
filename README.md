@@ -51,7 +51,7 @@ mkdir $HOME/goproject/src/k8s.io
 
 cd $HOME/goproject/src/k8s.io
 
-operator-sdk new memcached-operator --repo=github.com/tanjunchen/memcached-operator
+operator-sdk new memcached-operator --repo=github.com/Mountains-and-rivers/memcached-operator
 
 cd memcached-operator
 ```
