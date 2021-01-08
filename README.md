@@ -47,11 +47,11 @@ go version go1.13.4 linux/amd64
 
 使用 operator-sdk 创建 memcached-operator 项目：
 ```
-mkdir $HOME/goproject/src/k8s.io
+mkdir -p $HOME/projects/memcached-operator
 
-cd $HOME/goproject/src/k8s.io
+cd $HOME/projects/memcached-operator
 
-operator-sdk new memcached-operator --repo=github.com/Mountains-and-rivers/memcached-operator
+operator-sdk init --domain example.com --repo github.com/Mountains-and-rivers/memcached-operatorr
 
 cd memcached-operator
 ```
