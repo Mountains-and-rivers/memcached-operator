@@ -51,7 +51,7 @@ mkdir -p $HOME/projects/memcached-operator
 
 cd $HOME/projects/memcached-operator
 
-operator-sdk init --domain example.com --repo github.com/Mountains-and-rivers/memcached-operatorr
+operator-sdk init --domain example.com --repo github.com/Mountains-and-rivers/memcached-operator
 
 cd memcached-operator
 ```
