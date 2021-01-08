@@ -58,9 +58,9 @@ cd memcached-operator
 
 注意：在 $GOPATH/src 外部创建项目时，需要 --repo=<path> 参数。
 
-使用 apiVersion `cache.example.com/v1alpha1` 和 kind `Memcached` 创建名为 `Memcached` 的自定义资源(CRD) API。
+使用 apiVersion `v1alpha1` 和 kind `Memcached` 创建名为 `Memcached` 的自定义资源(CRD) API。
 
-`operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=Memcached`
+`operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller`
 
 这将在 `pkg/apis/cache/v1alpha1/` 下创建 `Memcached` 资源 API go 文件。
 
