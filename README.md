@@ -121,7 +121,7 @@ projects-controller-manager   0/1     1            0           63s
 ,"image":"mangseng/memcached-operator:v0.0.1"
 ...
 ...
-image: memcached-operator:v0.0.1
+image: mangseng/memcached-operator:v0.0.1
 imagePullPolicy: IfNotPresent
 livenessProbe:
   failureThreshold: 3
