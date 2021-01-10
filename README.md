@@ -86,7 +86,7 @@ operator-sdk create api --group cache --version v1alpha1 --kind Memcached --reso
 
 Controller 主要通过 Watch 与 Reconcile loop(控制环) 实现资源控制。
 
-根据官网描述，直接替换，主义修改其中的包地址：cachev1alpha1 
+根据官网描述，直接替换，注意修改其中的包地址：cachev1alpha1 
 ```
 github.com/Mountains-and-rivers/memcached-operator/api/v1alpha1 
 改成你自己的
