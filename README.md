@@ -82,17 +82,17 @@ type MemcachedStatus struct {
 
 添加一个新的 api，Controller 监视(watch)并协调(reconcile) `Memcached` 资源：
 
-根据官网描述，直接替换，主义修改其中的包地址：cachev1alpha1 
-```
-github.com/Mountains-and-rivers/memcached-operator/api/v1alpha1 
-改成你自己的
-```
 operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller`
 
 Controller 主要通过 Watch 与 Reconcile loop(控制环) 实现资源控制。
 
-更改 `memcached_controller.go` 相关代码，如[memcached_controller.go](https://github.com/Mountains-and-rivers/memcached-operator/blob/master/controllers/memcached_controller.go)。
-
+根据官网描述，直接替换，主义修改其中的包地址：cachev1alpha1 
+```
+github.com/Mountains-and-rivers/memcached-operator/api/v1alpha1 
+改成你自己的
+生成 manifests
+make manifests
+```
 有两种方法可以运行 operator：
 
     作为 Kubernetes 集群内部的 Deployment
