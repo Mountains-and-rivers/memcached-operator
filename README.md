@@ -93,8 +93,8 @@ github.com/Mountains-and-rivers/memcached-operator/api/v1alpha1
 生成 manifests
 make manifests
 
-编译镜像：
 ```
+编译镜像：
 这里没有使用quay.io仓库，用docker官方仓库  
 ```
 export USERNAME=mangseng  
