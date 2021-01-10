@@ -36,13 +36,13 @@ make install
 operator-sdk version
 
 ```
-operator-sdk version: "v0.15.0-79-g11aa2af7", commit: "11aa2af7aaa202cb38b2417031e6af2035c7948c", go version: "go1.13.4 linux/amd64"
+operator-sdk version: "v1.3.0", commit: "1abf57985b43bf6a59dcd18147b3c574fa57d3f6", kubernetes version: "1.19.4", go version: "go1.15.5", GOOS: "linux", GOARCH: "amd64"
 ```
 
 go version
 
 ```
-go version go1.13.4 linux/amd64
+go version go1.15.6 linux/amd64
 ```
 
 使用 operator-sdk 创建 memcached-operator 项目：
@@ -79,19 +79,19 @@ type MemcachedStatus struct {
 
 修改 `*_types.go` 文件后，运行以下命令更新该资源类型的自动生成代码：
 
-`operator-sdk generate k8s`
+`make generate`
 
 更新 CRD 清单：
 
-`operator-sdk generate crds`
+`make manifests`
 
-添加一个新的 Controller 监视(watch)并协调(reconcile) `Memcached` 资源：
+添加一个新的 api，Controller 监视(watch)并协调(reconcile) `Memcached` 资源：
 
-`operator-sdk add controller --api-version=cache.example.com/v1alpha1 --kind=Memcached`
+operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller`
 
 Controller 主要通过 Watch 与 Reconcile loop(控制环) 实现资源控制。
 
-更改 `memcached_controller.go` 相关代码，如[memcached_controller.go](https://github.com/tanjunchen/memcached-operator/blob/master/pkg/controller/memcached/memcached_controller.go)。
+更改 `memcached_controller.go` 相关代码，如[memcached_controller.go](https://github.com/Mountains-and-rivers/memcached-operator/blob/master/controllers/memcached_controller.go)。
 
 有两种方法可以运行 operator：
 
@@ -102,56 +102,72 @@ Controller 主要通过 Watch 与 Reconcile loop(控制环) 实现资源控制�
 
 执行以下步骤：
 
-    operator-sdk build tanjunchen/memcached-operator:v1
-    sed -i 's|REPLACE_IMAGE|tanjunchen/memcached-operator:v1|g' deploy/operator.yaml
+这里用docker官方仓库，先登录才能push成功
+make docker-build docker-push IMG=memcached-operator:v0.0.1
 
-构建相关 operator 镜像，注意目前 `deploy/operator.yaml` 中的 tanjunchen/memcached-operator:v1 镜像远程不能访问。需要自己替换镜像地址。
-
-设置 RBAC 并部署 memcached-operator：
+部署 memcached-operator：
 
 ```
-kubectl create -f deploy/service_account.yaml,deploy/role.yaml,deploy/role_binding.yaml,deploy/operator.yaml
+make deploy IMG=memcached-operator:v0.0.1
+这里要修改deploy中的镜像名称
+kubectl get deployment -n projects-system
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+projects-controller-manager   0/1     1            0           63s
+
+修改如下仓库地址
+
+搜索image字段修改
+...
+,"image":"mangseng/memcached-operator:v0.0.1"
+...
+...
+image: memcached-operator:v0.0.1
+imagePullPolicy: IfNotPresent
+livenessProbe:
+  failureThreshold: 3
+...
 ```
 
-kubectl get deployment  -owide | grep memcached-operator
+ kubectl get deployment -o wide -n projects-system
 
 ```
-memcached-operator   1/1     1            1           4h55m   memcached-operator   tanjunchen/memcached-operator:v1   name=memcached-operator
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS                IMAGES                                                                         SELECTOR
+projects-controller-manager   1/1     1            1           6m41s   kube-rbac-proxy,manager   gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0,mangseng/memcached-operator:v0.0.1   control-plane=controller-mana
 ```
 
-cat deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
+cat config/samples/cache_v1alpha1_memcached.yaml
 
 ```yaml
 apiVersion: cache.example.com/v1alpha1
 kind: Memcached
 metadata:
-  name: example-memcached
+  name: memcached-sample
 spec:
-  # Add fields here
   size: 3
 ```
 
-kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
+kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml
 
-kubectl get deployment
+ kubectl get deployment --all-namespaces
 
 ```
-NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
-example-memcached    3/3     3            3           4h58m
-memcached-operator   1/1     1            1           4h58m
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+NAMESPACE         NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+default           memcached-sample              3/3     3            3           102s
+kube-system       kube-dns                      1/1     1            1           12m
+projects-system   projects-controller-manager   1/1     1            1           12m
 ```
 
 kubectl get pods
 
 ```
 NAME                                  READY   STATUS    RESTARTS   AGE
-example-memcached-7c4df9b7b4-5t8lb    1/1     Running   0          5h
-example-memcached-7c4df9b7b4-6v9nm    1/1     Running   0          4h59m
-example-memcached-7c4df9b7b4-h9fmd    1/1     Running   0          5h
-memcached-operator-686f9b7c9b-2fwfs   1/1     Running   0          5h
+memcached-sample-6c765df685-68s4p   1/1     Running   0          2m14s
+memcached-sample-6c765df685-6ssgv   1/1     Running   0          2m14s
+memcached-sample-6c765df685-ltjjx   1/1     Running   0          2m14s
 ```
 
-kubectl get memcached/example-memcached -o yaml
+kubectl get memcached/memcached-sample -o yaml
 
 ```
 apiVersion: cache.example.com/v1alpha1
@@ -159,89 +175,50 @@ kind: Memcached
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"annotations":{},"name":"example-memcached","namespace":"default"},"spec":{"size":3}}
-  creationTimestamp: "2020-03-17T09:31:21Z"
-  generation: 8
-  name: example-memcached
+      {"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"annotations":{},"name":"memcached-sample","namespace":"default"},"spec":{"size":3}}
+  creationTimestamp: "2021-01-10T04:05:32Z"
+  generation: 1
+  managedFields:
+  - apiVersion: cache.example.com/v1alpha1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+      f:spec:
+        .: {}
+        f:size: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2021-01-10T04:05:32Z"
+  - apiVersion: cache.example.com/v1alpha1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        .: {}
+        f:nodes: {}
+    manager: manager
+    operation: Update
+    time: "2021-01-10T04:05:46Z"
+  name: memcached-sample
   namespace: default
-  resourceVersion: "135559"
-  selfLink: /apis/cache.example.com/v1alpha1/namespaces/default/memcacheds/example-memcached
-  uid: 3740a34d-3321-4759-b7e9-5befce29b428
+  resourceVersion: "1071"
+  uid: b738b193-129d-402c-b375-d7d2973d8412
 spec:
   size: 3
 status:
   nodes:
-  - example-memcached-7c4df9b7b4-8fcd4
-  - example-memcached-7c4df9b7b4-h9fmd
-  - example-memcached-7c4df9b7b4-5t8lb
-  - example-memcached-7c4df9b7b4-6v9nm
-  - example-memcached-7c4df9b7b4-f82z2
+  - memcached-sample-6c765df685-ltjjx
+  - memcached-sample-6c765df685-6ssgv
+  - memcached-sample-6c765df685-68s4p
 ```
 
-上面 size 大小与 node 节点数不一致是因为我先将 `deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml` 中的 size 改为 5,然后减为 3。而没有在 controller 中添加相关操作事件。
-
-kubectl logs memcached-operator-686f9b7c9b-2fwfs
+修改pod副本数
+```
+kubectl patch memcached memcached-sample -p '{"spec":{"size": 5}}' --type=merge
+kubectl get deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+memcached-sample   5/5     5            5           4m55s
 
 ```
-{"level":"info","ts":1584439298.7350085,"logger":"cmd","msg":"Operator Version: 0.0.1"}
-{"level":"info","ts":1584439298.7378504,"logger":"cmd","msg":"Go Version: go1.13.4"}
-{"level":"info","ts":1584439298.7378654,"logger":"cmd","msg":"Go OS/Arch: linux/amd64"}
-{"level":"info","ts":1584439298.7378726,"logger":"cmd","msg":"Version of operator-sdk: v0.15.0+git"}
-{"level":"info","ts":1584439298.7380009,"logger":"leader","msg":"Trying to become the leader."}
-{"level":"info","ts":1584439299.2666407,"logger":"leader","msg":"No pre-existing lock was found."}
-{"level":"info","ts":1584439299.269379,"logger":"leader","msg":"Became the leader."}
-{"level":"info","ts":1584439299.774637,"logger":"controller-runtime.metrics","msg":"metrics server is starting to listen","addr":"0.0.0.0:8383"}
-{"level":"info","ts":1584439299.7766497,"logger":"cmd","msg":"Registering Components."}
-{"level":"info","ts":1584439300.7996862,"logger":"metrics","msg":"Metrics Service object created","Service.Name":"memcached-operator-metrics","Service.Namespace":"default"}
-{"level":"info","ts":1584439301.3024964,"logger":"cmd","msg":"Could not create ServiceMonitor object","error":"no ServiceMonitor registered with the API"}
-{"level":"info","ts":1584439301.3025157,"logger":"cmd","msg":"Install prometheus-operator in your cluster to create ServiceMonitor objects","error":"no ServiceMonitor registered with the API"}
-{"level":"info","ts":1584439301.3025324,"logger":"cmd","msg":"Starting the Cmd."}
-{"level":"info","ts":1584439301.3038416,"logger":"controller-runtime.controller","msg":"Starting EventSource","controller":"memcached-controller","source":"kind source: /, Kind="}
-{"level":"info","ts":1584439301.303985,"logger":"controller-runtime.controller","msg":"Starting EventSource","controller":"memcached-controller","source":"kind source: /, Kind="}
-{"level":"info","ts":1584439301.3040295,"logger":"controller-runtime.controller","msg":"Starting Controller","controller":"memcached-controller"}
-{"level":"info","ts":1584439301.304537,"logger":"controller-runtime.manager","msg":"starting metrics server","path":"/metrics"}
-{"level":"info","ts":1584439301.404253,"logger":"controller-runtime.controller","msg":"Starting workers","controller":"memcached-controller","worker count":1}
-2020-03-17 10:01:41.404451307 +0000 UTC m=+2.726210870 ......Kubernetes Operator Framework Reconcile......
-{"level":"info","ts":1584439301.4079845,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-{"level":"info","ts":1584439301.5083523,"logger":"controller_memcached","msg":"Creating a new Deployment","Request.Namespace":"default","Request.Name":"example-memcached","Deployment.Namespace":"default","Deployment.Name":"example-memcached"}
-2020-03-17 10:01:41.580843209 +0000 UTC m=+2.902602770 ......Kubernetes Operator Framework Reconcile......
-2020-03-17 10:01:41.580921058 +0000 UTC m=+2.902680627 ......Kubernetes Operator Framework Update Pod Name ......
-{"level":"info","ts":1584439301.580856,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:01:41.584898031 +0000 UTC m=+2.906657592 ......Kubernetes Operator Framework Reconcile......
-{"level":"info","ts":1584439301.5849097,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:02:35.634080794 +0000 UTC m=+56.955840354 ......Kubernetes Operator Framework Reconcile......
-{"level":"info","ts":1584439355.6340961,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:02:35.711503159 +0000 UTC m=+57.033262720 ......Kubernetes Operator Framework Reconcile......
-2020-03-17 10:02:35.711948775 +0000 UTC m=+57.033708345 ......Kubernetes Operator Framework Update Pod Name ......
-{"level":"info","ts":1584439355.711521,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:02:35.728754702 +0000 UTC m=+57.050514262 ......Kubernetes Operator Framework Reconcile......
-2020-03-17 10:02:35.72883959 +0000 UTC m=+57.050599159 ......Kubernetes Operator Framework Update Pod Name ......
-{"level":"info","ts":1584439355.728768,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:02:35.732398693 +0000 UTC m=+57.054158255 ......Kubernetes Operator Framework Reconcile......
-{"level":"info","ts":1584439355.7324111,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:03:40.896113823 +0000 UTC m=+122.217873384 ......Kubernetes Operator Framework Reconcile......
-{"level":"info","ts":1584439420.8961298,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:03:40.9053012 +0000 UTC m=+122.227060761 ......Kubernetes Operator Framework Reconcile......
-2020-03-17 10:03:40.905427776 +0000 UTC m=+122.227187345 ......Kubernetes Operator Framework Update Pod Name ......
-{"level":"info","ts":1584439420.9053237,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:03:40.940342735 +0000 UTC m=+122.262102295 ......Kubernetes Operator Framework Reconcile......
-2020-03-17 10:03:40.940425961 +0000 UTC m=+122.262185531 ......Kubernetes Operator Framework Update Pod Name ......
-{"level":"info","ts":1584439420.940356,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-2020-03-17 10:03:40.970526685 +0000 UTC m=+122.292286246 ......Kubernetes Operator Framework Reconcile......
-{"level":"info","ts":1584439420.9732163,"logger":"controller_memcached","msg":"Reconciling Memcached","Request.Namespace":"default","Request.Name":"example-memcached"}
-```
-
-清理资源：
-
-```
-kubectl delete -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml,deploy/operator.yaml,deploy/role_binding.yaml,deploy/role.yaml,deploy/service_account.yaml
-```
-
-**高级进阶与源码分析**
-
-## 参考
-
-https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md#compile-and-install-from-master
-
-https://github.com/operator-framework
-
