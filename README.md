@@ -221,4 +221,12 @@ kubectl get deployment
 NAME               READY   UP-TO-DATE   AVAILABLE   AGE
 memcached-sample   5/5     5            5           4m55s
 
+kubectl get pods
+
+memcached-sample-6c765df685-5fvqn   1/1     Running   0          4s
+memcached-sample-6c765df685-6ssgv   1/1     Running   0          10m
+memcached-sample-6c765df685-qtcrz   1/1     Running   0          4s
+memcached-sample-6c765df685-w5sh4   1/1     Running   0          4s
+memcached-sample-6c765df685-zf94j   1/1     Running   0          4s
+
 ```
