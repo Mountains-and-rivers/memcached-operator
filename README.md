@@ -22,15 +22,11 @@
 
 #### operator-sdk demo
 
-编译与安装 operator-framework/operator-sdk。具体步骤请参考 [install-the-operator-sdk-cli](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md#install-the-operator-sdk-cli)，
-此次试验是按照 [compile-and-install-from-master](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md#compile-and-install-from-master) 方式安装的 operator-sdk。
+编译与安装 operator-framework/operator-sdk。具体步骤请参考 [https://docs.openshift.com/container-platform/4.1/applications/operator_sdk/osdk-getting-started.html)，
+此次试验是按照 [Documentation/Building Operators/Golang/Tutorial/Golang Operator Tutorial](https://master.sdk.operatorframework.io/docs/building-operators/golang/tutorial/) 方式安装的 operator-sdk。
 
 ```
-git clone https://github.com/operator-framework/operator-sdk
-cd operator-sdk
-git checkout master
-make tidy
-make install
+建议 github 直接下载二进制，配置环境变量
 ```
 
 operator-sdk version
@@ -62,7 +58,6 @@ cd memcached-operator
 
 `operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller`
 
-这将在 `pkg/apis/cache/v1alpha1/` 下创建 `Memcached` 资源 API go 文件。
 
 修改 `pkg/apis/cache/v1alpha1/memcached_types.go` 文件，添加以下内容：
 
@@ -87,6 +82,11 @@ type MemcachedStatus struct {
 
 添加一个新的 api，Controller 监视(watch)并协调(reconcile) `Memcached` 资源：
 
+根据官网描述，直接替换，主义修改其中的包地址：cachev1alpha1 
+```
+github.com/Mountains-and-rivers/memcached-operator/api/v1alpha1 
+改成你自己的
+```
 operator-sdk create api --group cache --version v1alpha1 --kind Memcached --resource --controller`
 
 Controller 主要通过 Watch 与 Reconcile loop(控制环) 实现资源控制。
