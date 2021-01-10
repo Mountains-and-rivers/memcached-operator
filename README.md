@@ -92,12 +92,14 @@ github.com/Mountains-and-rivers/memcached-operator/api/v1alpha1
 改成你自己的
 生成 manifests
 make manifests
-```
+
 编译镜像：
+```
 这里没有使用quay.io/仓库，用docker官方仓库
 export USERNAME=mangseng
 make docker-build docker-push IMG=$USERNAME/memcached-operator:v0.0.1
 
+```
 部署 memcached-operator：
 
 ```
