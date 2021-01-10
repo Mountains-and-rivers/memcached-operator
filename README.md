@@ -93,17 +93,10 @@ github.com/Mountains-and-rivers/memcached-operator/api/v1alpha1
 生成 manifests
 make manifests
 ```
-有两种方法可以运行 operator：
-
-    作为 Kubernetes 集群内部的 Deployment
-    作为集群外的 Go 程序
-
-我这里部署到 Kubernetes 集群中。
-
-执行以下步骤：
-
-这里用docker官方仓库，先登录才能push成功
-make docker-build docker-push IMG=memcached-operator:v0.0.1
+编译镜像：
+这里没有使用quay.io/仓库，用docker官方仓库
+export USERNAME=mangseng
+make docker-build docker-push IMG=$USERNAME/memcached-operator:v0.0.1
 
 部署 memcached-operator：
 
